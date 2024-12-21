@@ -116,6 +116,9 @@ namespace HTTP
 				case ".css":
 					media = "text/css; charset=utf-8";
 					break;
+				case ".gif":
+					media = "image/gif";
+					break;
 				case ".png":
 					media = "image/png";
 					break;
