@@ -4,7 +4,6 @@ using System.IO;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
-using HTTPServer;
 using System.Diagnostics;
 
 namespace HTTP
