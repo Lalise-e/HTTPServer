@@ -81,6 +81,9 @@ namespace HTTP
 				case "HEAD":
 					HandleHEAD(client, request);
 					break;
+				case "PUSH":
+					HandlePUSH(client, request);
+					break;
 				default:
 					throw new HTTPException($"{request.RequestMethod} Is Not Implemented", 501);
 			}
@@ -99,6 +102,11 @@ namespace HTTP
 		/// </summary>
 		private static void HandleGET(TcpClient client, HTTPRequest request)
 		{
+			if (request.RawUrl[..5].ToLower() == "/api")
+			{
+				HandleApiGET(client, request);
+				return;
+			}
 			string requestedPath = WebPath + request.RawUrl;
 			if (!File.Exists(requestedPath))
 			{
@@ -140,6 +148,14 @@ namespace HTTP
 			byte[] body = File.ReadAllBytes(requestedPath);
 			byte[] buffer = ConstructMessage(200, "OK", header, body);
 			SendMessage(client, buffer);
+		}
+		private static void HandleApiGET(TcpClient client, HTTPRequest request)
+		{
+
+		}
+		private static void HandlePUSH(TcpClient client, HTTPRequest request)
+		{
+
 		}
 		/// <summary>
 		/// Handles a HTTP error and notifies the client of the failure.
