@@ -191,7 +191,7 @@ namespace HTTP
 			{
 				result += header[i] + LINEBREAK;
 			}
-			result += body.Length + LINEBREAK + LINEBREAK;
+			result += $"content-lentgth: {body.Length}{LINEBREAK}{LINEBREAK}";
 			List<byte> buffer = [.. Encoding.UTF8.GetBytes(result), .. body];
 			return buffer.ToArray();
 		} 
