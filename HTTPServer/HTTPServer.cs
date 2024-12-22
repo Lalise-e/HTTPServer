@@ -171,7 +171,7 @@ namespace HTTP
 		/// <param name="headerFields">fields to be added to the header. Some are already in by default and will not be overwritten.</param>
 		private static string[] ConstructHeader(params string[] headerFields)
 		{
-			List<string> result = ["server: custom HTTP server/0.1", "cache: no-store"];
+			List<string> result = ["server: custom HTTP server/0.1", "cache: no-store", "connection: close"];
 			foreach (string field in headerFields)
 				result.Add(field);
 			return result.ToArray();
