@@ -81,7 +81,6 @@ namespace HTTP
 			}
 			Log("API successfully loaded.");
 		}
-
 		/// <summary>
 		/// Constructs a HTTP request from a TCP client and sends if off for further handling.
 		/// </summary>
