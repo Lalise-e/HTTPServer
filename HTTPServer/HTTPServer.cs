@@ -35,7 +35,7 @@ namespace HTTP
 		/// Writes the message to the console window with a timestamp.<br></br>
 		/// TODO: Make this better
 		/// </summary>
-		internal static void Log(string message)
+		public static void Log(string message)
 		{
 			Console.WriteLine($"[{DateTime.Now:HH:mm:ss:ff}]: {message}");
 		}
