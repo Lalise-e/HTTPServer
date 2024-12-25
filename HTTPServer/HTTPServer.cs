@@ -120,6 +120,9 @@ namespace HTTP
 				case "GET":
 					HandleGET(client, request);
 					break;
+				case "POST":
+					HandlePOST(client, request);
+					break;
 				case "HEAD":
 					HandleHEAD(client, request);
 					break;
@@ -199,6 +202,22 @@ namespace HTTP
 			if (!_getTable.ContainsKey(request.RawUrl))
 				throw new HTTPException("Invalid syntax", 400);
 			string value = _getTable[request.RawUrl].HandleGet(request.Body, out int status, out string message);
+			//This is a pretty bad way of doing things
+			//TODO: Add handling for other successful responses
+			if (status != 200)
+				throw new HTTPException(message, status);
+			string[] header = ConstructHeader("content-type: text/plain");
+			byte[] response = ConstructMessage(status, message, header, Encoding.UTF8.GetBytes(value));
+			SendMessage(client, response);
+		}
+		/// <summary>
+		/// Handles a POST request.
+		/// </summary>
+		private static void HandlePOST(TcpClient client, HTTPRequest request)
+		{
+			if (!_postTable.ContainsKey(request.RawUrl))
+				throw new HTTPException("Invalid syntax", 400);
+			string value = _postTable[request.RawUrl].HandlePOST(request.Body, out int status, out string message);
 			//This is a pretty bad way of doing things
 			//TODO: Add handling for other successful responses
 			if (status != 200)
