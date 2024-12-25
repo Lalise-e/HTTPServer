@@ -21,8 +21,7 @@ namespace HTTP
 		//Add the location of your webpage here i.e. "C:\Niche-Interest\WebPage
 		public static string WebPath = "";
 		public static string DefaultFile = "index.html";
-		public static Dictionary<string, IPost> _postTable = new();
-		public static Dictionary<string, IGet> _getTable = new();
+		public static Dictionary<string, IApiCall> _apiTable = new();
 		public static async Task Main(string[] args)
 		{
 			LoadApi();
@@ -45,12 +44,12 @@ namespace HTTP
 			Console.WriteLine($"[{DateTime.Now:HH:mm:ss:ff}]: {message}");
 		}
 		/// <summary>
-		/// Loads all the classes with <see cref="IGet"/> and/or <see cref="IPost"/> from <see cref="api"/> into 
-		/// <see cref="_getTable"/> and <see cref="_postTable"/>.
+		/// Loads all the classes with <see cref="IGet"/> and/or <see cref="IApiCall"/> from <see cref="api"/> into 
+		/// <see cref="_apiTable"/> and <see cref="_postTable"/>.
 		/// </summary>
 		private static void LoadApi()
 		{
-			Assembly assembly = typeof(IGet).Assembly;
+			Assembly assembly = typeof(IApiCall).Assembly;
 			Type[] types = assembly.GetTypes();
 			for (int i = 0; i < types.Length; i++)
 			{
@@ -58,23 +57,23 @@ namespace HTTP
 				//Checks if type is valid
 				if (interfaces.Count == 0)
 					continue;
-				if (!interfaces.Contains(typeof(IGet)) && !interfaces.Contains(typeof(IPost)))
+				if (!interfaces.Contains(typeof(IApiCall)))
 					continue;
 				//Creates path
 				string path = '/' + (types[i].Namespace.Replace('.', '/')) + "/" + types[i].Name;
 				//Creates instance of class
 				ConstructorInfo constructor = types[i].GetConstructor(Array.Empty<Type>()) ??
 					throw new Exception($"{types[i].FullName} lacks a public constructor with 0 arguments");
-				object instance = constructor.Invoke(Array.Empty<object>());
+				IApiCall instance = (IApiCall)constructor.Invoke(Array.Empty<object>());
 				//Deals with GET
-				if (interfaces.Contains(typeof(IGet)))
+				if (instance.TargetMethod.HasFlag(HTTPMethod.GET))
 				{
-					_getTable.Add(path, (IGet)instance);
+					_apiTable.Add(path, instance);
 					Log($"Added GET {path}");
 				}
-				if (interfaces.Contains(typeof(IPost)))
+				if (instance.TargetMethod.HasFlag(HTTPMethod.POST) && (!_apiTable.ContainsKey(path)))
 				{
-					_postTable.Add(path, (IPost)instance);
+					_apiTable.Add(path, instance);
 					Log($"Added POST {path}");
 				}
 			}
@@ -121,7 +120,7 @@ namespace HTTP
 					HandleGET(client, request);
 					break;
 				case "POST":
-					HandlePOST(client, request);
+					HandleApiRequest(client, request);
 					break;
 				case "HEAD":
 					HandleHEAD(client, request);
@@ -147,7 +146,7 @@ namespace HTTP
 			if(request.RawUrl.Length >= 4)
 				if (request.RawUrl[..4] == "/api")
 				{
-					HandleGETApi(client, request);
+					HandleApiRequest(client, request);
 					return;
 				}
 			string requestedPath = WebPath + request.RawUrl;
@@ -195,35 +194,28 @@ namespace HTTP
 		/// <summary>
 		/// Handles an API GET request.
 		/// </summary>
-		/// <param name="client"></param>
-		/// <param name="request"></param>
-		private static void HandleGETApi(TcpClient client, HTTPRequest request)
+		private static void HandleApiRequest(TcpClient client, HTTPRequest request)
 		{
-			if (!_getTable.ContainsKey(request.RawUrl))
+			if (!_apiTable.ContainsKey(request.RawUrl))
 				throw new HTTPException("Invalid syntax", 400);
-			string value = _getTable[request.RawUrl].HandleGet(request.Body, out int status, out string message);
+			IApiCall callHandler = _apiTable[request.RawUrl];
+			if (!callHandler.TargetMethod.ToString().Contains(request.RequestMethod))
+				throw new HTTPException("Invalid syntax", 400);
+			byte[] body = callHandler.HandleCall(request, out string contentType);
 			//This is a pretty bad way of doing things
 			//TODO: Add handling for other successful responses
-			if (status != 200)
-				throw new HTTPException(message, status);
-			string[] header = ConstructHeader("content-type: text/plain");
-			byte[] response = ConstructMessage(status, message, header, Encoding.UTF8.GetBytes(value));
-			SendMessage(client, response);
-		}
-		/// <summary>
-		/// Handles a POST request.
-		/// </summary>
-		private static void HandlePOST(TcpClient client, HTTPRequest request)
-		{
-			if (!_postTable.ContainsKey(request.RawUrl))
-				throw new HTTPException("Invalid syntax", 400);
-			string value = _postTable[request.RawUrl].HandlePOST(request.Body, out int status, out string message);
-			//This is a pretty bad way of doing things
-			//TODO: Add handling for other successful responses
-			if (status != 200)
-				throw new HTTPException(message, status);
-			string[] header = ConstructHeader("content-type: text/plain");
-			byte[] response = ConstructMessage(status, message, header, Encoding.UTF8.GetBytes(value));
+			string[] header;
+			byte[] response;
+			if(contentType == null)
+			{
+				header = ConstructHeader();
+				response = ConstructMessage(200, "OK", header, Array.Empty<byte>());
+			}
+			else
+			{
+				header = ConstructHeader(contentType);
+				response = ConstructMessage(200, "OK", header, body);
+			}
 			SendMessage(client, response);
 		}
 		/// <summary>
