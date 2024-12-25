@@ -51,6 +51,12 @@ namespace HTTP
 				}
 				_header.Add(field[0].ToLower(), field[1]);
 			}
+			for (; index < requestLines.Length; index++)
+			{
+				Body += requestLines[index];
+				if (index != requestLines.Length - 1)
+					Body += HTTPServer.LINEBREAK;
+			}
 		}
 		/// <summary>
 		/// Gets the value from a field in the HTTP header of the request.
