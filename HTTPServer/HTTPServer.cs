@@ -22,7 +22,7 @@ namespace HTTP
 		{
 			TcpListener listener = new(IPAddress.Parse(IP), PORT);
 			listener.Start();
-			Log("Started listening on port 80...");
+			Log($"Started listening on port {PORT}...");
 			while (true)
 			{
 				TcpClient client = await listener.AcceptTcpClientAsync();
