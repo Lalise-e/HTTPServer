@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using System.Diagnostics;
+using System.ComponentModel.DataAnnotations;
 
 namespace HTTP
 {
@@ -99,6 +100,12 @@ namespace HTTP
 		/// </summary>
 		private static void HandleGET(TcpClient client, HTTPRequest request)
 		{
+			if(request.RawUrl.Length >= 4)
+				if (request.RawUrl[..4] == "/api")
+				{
+					HandleGETApi(client, request);
+					return;
+				}
 			string requestedPath = WebPath + request.RawUrl;
 			if (!File.Exists(requestedPath))
 			{
@@ -140,6 +147,15 @@ namespace HTTP
 			byte[] body = File.ReadAllBytes(requestedPath);
 			byte[] buffer = ConstructMessage(200, "OK", header, body);
 			SendMessage(client, buffer);
+		}
+		/// <summary>
+		/// Handles an API GET request.
+		/// </summary>
+		/// <param name="client"></param>
+		/// <param name="request"></param>
+		private static void HandleGETApi(TcpClient client, HTTPRequest request)
+		{
+			throw new HTTPException("Not Implemented", 501);
 		}
 		/// <summary>
 		/// Handles a HTTP error and notifies the client of the failure.
