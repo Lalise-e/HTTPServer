@@ -1,4 +1,5 @@
 ﻿//HTTP/1.1 server made with TCP
+using api;
 using System;
 using System.IO;
 using System.Net.Sockets;
@@ -6,6 +7,7 @@ using System.Net;
 using System.Text;
 using System.Diagnostics;
 using System.ComponentModel.DataAnnotations;
+using System.Reflection;
 
 namespace HTTP
 {
@@ -19,8 +21,11 @@ namespace HTTP
 		//Add the location of your webpage here i.e. "C:\Niche-Interest\WebPage
 		public static string WebPath = "";
 		public static string DefaultFile = "index.html";
+		public static Dictionary<string, IPost> _postTable = new();
+		public static Dictionary<string, IGet> _getTable = new();
 		public static async Task Main(string[] args)
 		{
+			LoadApi();
 			TcpListener listener = new(IPAddress.Parse(IP), PORT);
 			listener.Start();
 			Log($"Started listening on port {PORT}...");
@@ -39,6 +44,44 @@ namespace HTTP
 		{
 			Console.WriteLine($"[{DateTime.Now:HH:mm:ss:ff}]: {message}");
 		}
+		/// <summary>
+		/// Loads all the classes with <see cref="IGet"/> and/or <see cref="IPost"/> from <see cref="api"/> into 
+		/// <see cref="_getTable"/> and <see cref="_postTable"/>.
+		/// </summary>
+		private static void LoadApi()
+		{
+			Assembly assembly = typeof(IGet).Assembly;
+			Console.WriteLine(assembly.FullName);
+			Type[] types = assembly.GetTypes();
+			for (int i = 0; i < types.Length; i++)
+			{
+				List<Type> interfaces = types[i].GetInterfaces().ToList();
+				//Checks if type is valid
+				if (interfaces.Count == 0)
+					continue;
+				if (!interfaces.Contains(typeof(IGet)) && !interfaces.Contains(typeof(IPost)))
+					continue;
+				//Creates path
+				string path = '/' + (types[i].Namespace.Replace('.', '/')) + "/" + types[i].Name;
+				//Creates instance of class
+				ConstructorInfo constructor = types[i].GetConstructor(Array.Empty<Type>()) ??
+					throw new Exception($"{types[i].FullName} lacks a public constructor with 0 arguments");
+				object instance = constructor.Invoke(Array.Empty<object>());
+				//Deals with GET
+				if (interfaces.Contains(typeof(IGet)))
+				{
+					_getTable.Add(path, (IGet)instance);
+					Log($"Added GET {path}");
+				}
+				if (interfaces.Contains(typeof(IPost)))
+				{
+					_postTable.Add(path, (IPost)instance);
+					Log($"Added POST {path}");
+				}
+			}
+			Log("API successfully loaded.");
+		}
+
 		/// <summary>
 		/// Constructs a HTTP request from a TCP client and sends if off for further handling.
 		/// </summary>
