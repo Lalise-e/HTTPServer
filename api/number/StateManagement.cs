@@ -10,12 +10,13 @@ namespace api.number
 	{
 		private static bool _inProgress = false;
 		private static int _number;
-		internal static void Add(int diff)
+		internal static void Add(string diff)
 		{
+			int.TryParse(diff, out int number);
 			while (_inProgress)
 				Thread.Sleep(1);
 			_inProgress = true;
-			_number += diff;
+			_number += number;
 			_inProgress = false;
 		}
 		internal static int GetNumber() => _number;
