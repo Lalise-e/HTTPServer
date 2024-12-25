@@ -4,12 +4,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace HTTPServer
+namespace api
 {
 	/// <summary>
-	/// Interface for handling POST requests targeting /api.
+	/// Interface for handling GET requests targeting /api.
 	/// </summary>
-	public interface IPost
+	public interface IGet
 	{
+
 	}
 }
