@@ -51,7 +51,6 @@ namespace HTTP
 		private static void LoadApi()
 		{
 			Assembly assembly = typeof(IGet).Assembly;
-			Console.WriteLine(assembly.FullName);
 			Type[] types = assembly.GetTypes();
 			for (int i = 0; i < types.Length; i++)
 			{
