@@ -197,7 +197,16 @@ namespace HTTP
 		/// <param name="request"></param>
 		private static void HandleGETApi(TcpClient client, HTTPRequest request)
 		{
-			throw new HTTPException("Not Implemented", 501);
+			if (!_getTable.ContainsKey(request.RawUrl))
+				throw new HTTPException("Invalid syntax", 400);
+			string value = _getTable[request.RawUrl].HandleGet(request.Body, out int status, out string message);
+			//This is a pretty bad way of doing things
+			//TODO: Add handling for other successful responses
+			if (status != 200)
+				throw new HTTPException(message, status);
+			string[] header = ConstructHeader("content-type: text/plain");
+			byte[] response = ConstructMessage(status, message, header, Encoding.UTF8.GetBytes(value));
+			SendMessage(client, response);
 		}
 		/// <summary>
 		/// Handles a HTTP error and notifies the client of the failure.
