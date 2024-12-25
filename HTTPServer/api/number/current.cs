@@ -1,4 +1,5 @@
-﻿using System;
+﻿using HTTP;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,13 +7,14 @@ using System.Threading.Tasks;
 
 namespace api.number
 {
-	public class current : IGet
+	public class current : IApiCall
 	{
-		public string HandleGet(string requestBody, out int statusCode, out string message)
+		public HTTPMethod TargetMethod { get { return HTTPMethod.GET; } }
+
+		public byte[] HandleCall(HTTPRequest request, out string contentType)
 		{
-			statusCode = 200;
-			message = "OK";
-			return StateManagement.GetNumber().ToString();
+			contentType = "content-type: text/plain";
+			return Encoding.UTF8.GetBytes(StateManagement.GetNumber().ToString());
 		}
 	}
 }
