@@ -9,7 +9,7 @@ namespace HTTPServer
 	/// <summary>
 	/// Interface for handling GET requests targeting /api.
 	/// </summary>
-	internal interface IGet
+	public interface IGet
 	{
 	}
 }
