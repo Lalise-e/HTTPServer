@@ -1,6 +1,4 @@
-﻿using HTTP;
-
-namespace api
+﻿namespace HTTPFramework
 {
 	/// <summary>
 	/// Interface for handling POST requests targeting /api.
