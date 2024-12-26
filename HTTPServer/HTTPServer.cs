@@ -1,12 +1,8 @@
 ﻿//HTTP/1.1 server made with TCP
 using api;
-using System;
-using System.IO;
 using System.Net.Sockets;
 using System.Net;
 using System.Text;
-using System.Diagnostics;
-using System.ComponentModel.DataAnnotations;
 using System.Reflection;
 
 namespace HTTP
