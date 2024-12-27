@@ -1,4 +1,4 @@
-﻿namespace api
+﻿namespace HTTPFramework
 {
    [Flags]
     public enum HTTPMethod

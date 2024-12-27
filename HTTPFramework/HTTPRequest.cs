@@ -1,9 +1,11 @@
 using System.Net;
 
-namespace HTTP
+namespace HTTPFramework
 {
 	public class HTTPRequest
 	{
+		public const string LINEBREAK = "\r\n";
+		public const string VERSION = "HTTP/1.1";
 		/// <summary>
 		/// The HTTP method of the request.
 		/// </summary>
@@ -25,7 +27,7 @@ namespace HTTP
 		public HTTPRequest(string request, IPEndPoint ip)
 		{
 			Adress = ip;
-			string[] requestLines = request.Split(HTTPServer.LINEBREAK);
+			string[] requestLines = request.Split(LINEBREAK);
 			string[] requestDeets = requestLines[0].Split(' ');
 			RequestMethod = requestDeets[0];
 			RawUrl = requestDeets[1];
@@ -41,7 +43,7 @@ namespace HTTP
 				if (_header.ContainsKey(field[0]))
 				{
 					File.WriteAllText($"Error {DateTime.Now:M HH:mm:ss:fff}.error", request);
-					HTTPServer.Log("Duplicate field in header saved http message to file");
+					Log("Duplicate field in header saved http message to file");
 					continue;
 				}
 				_header.Add(field[0].ToLower(), field[1]);
@@ -50,8 +52,16 @@ namespace HTTP
 			{
 				Body += requestLines[index];
 				if (index != requestLines.Length - 1)
-					Body += HTTPServer.LINEBREAK;
+					Body += LINEBREAK;
 			}
+		}
+		/// <summary>
+		/// Writes the message to the console window with a timestamp.<br></br>
+		/// TODO: Make this better
+		/// </summary>
+		public static void Log(string message)
+		{
+			Console.WriteLine($"[{DateTime.Now:HH:mm:ss:ff}]: {message}");
 		}
 		/// <summary>
 		/// Gets the value from a field in the HTTP header of the request.

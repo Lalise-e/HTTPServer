@@ -1,7 +1,7 @@
 ﻿//HTTP/1.1 server made with TCP
-using api;
-using System.Net.Sockets;
+using HTTPFramework;
 using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Reflection;
 
@@ -12,8 +12,6 @@ namespace HTTP
 		public const int PORT = 80;
 		//Your local IP. Change this based on your network.
 		public const string IP = "192.168.0.137";
-		public const string LINEBREAK = "\r\n";
-		public const string VERSION = "HTTP/1.1";
 		//Add the location of your webpage here i.e. "C:\Niche-Interest\WebPage
 		public static string WebPath = "";
 		public static string DefaultFile = "index.html";
@@ -23,7 +21,7 @@ namespace HTTP
 			LoadApi();
 			TcpListener listener = new(IPAddress.Parse(IP), PORT);
 			listener.Start();
-			Log($"Started listening on port {PORT}...");
+			HTTPRequest.Log($"Started listening on port {PORT}...");
 			while (true)
 			{
 				TcpClient client = await listener.AcceptTcpClientAsync();
@@ -32,20 +30,17 @@ namespace HTTP
 			}
 		}
 		/// <summary>
-		/// Writes the message to the console window with a timestamp.<br></br>
-		/// TODO: Make this better
-		/// </summary>
-		public static void Log(string message)
-		{
-			Console.WriteLine($"[{DateTime.Now:HH:mm:ss:ff}]: {message}");
-		}
-		/// <summary>
 		/// Loads all the classes with <see cref="IGet"/> and/or <see cref="IApiCall"/> from <see cref="api"/> into 
 		/// <see cref="_apiTable"/> and <see cref="_postTable"/>.
 		/// </summary>
 		private static void LoadApi()
 		{
-			Assembly assembly = typeof(IApiCall).Assembly;
+			if (!File.Exists($"{WebPath}\\api\\api.dll"))
+			{
+				HTTPRequest.Log("No API found.");
+				return;
+			}
+			Assembly assembly = Assembly.LoadFile($"{WebPath}\\api\\api.dll");
 			Type[] types = assembly.GetTypes();
 			for (int i = 0; i < types.Length; i++)
 			{
@@ -56,7 +51,7 @@ namespace HTTP
 				if (!interfaces.Contains(typeof(IApiCall)))
 					continue;
 				//Creates path
-				string path = '/' + (types[i].Namespace.Replace('.', '/')) + "/" + types[i].Name;
+				string path = ('/' + types[i].Namespace.Replace('.', '/') + "/" + types[i].Name).Replace('_', '-');
 				//Creates instance of class
 				ConstructorInfo constructor = types[i].GetConstructor(Array.Empty<Type>()) ??
 					throw new Exception($"{types[i].FullName} lacks a public constructor with 0 arguments");
@@ -65,15 +60,15 @@ namespace HTTP
 				if (instance.TargetMethod.HasFlag(HTTPMethod.GET))
 				{
 					_apiTable.Add(path, instance);
-					Log($"Added GET {path}");
+					HTTPRequest.Log($"Added GET {path}");
 				}
 				if (instance.TargetMethod.HasFlag(HTTPMethod.POST) && (!_apiTable.ContainsKey(path)))
 				{
 					_apiTable.Add(path, instance);
-					Log($"Added POST {path}");
+					HTTPRequest.Log($"Added POST {path}");
 				}
 			}
-			Log("API successfully loaded.");
+			HTTPRequest.Log("API successfully loaded.");
 		}
 		/// <summary>
 		/// Constructs a HTTP request from a TCP client and sends if off for further handling.
@@ -109,7 +104,7 @@ namespace HTTP
 		private static void HandleRequest(TcpClient client, HTTPRequest request)
 		{
 			if (request.RequestMethod == "GET" && request.RawUrl == "/")
-				Log($"{request.GetField("user-agent")} connected from: {request.Adress}");
+				HTTPRequest.Log($"{request.GetField("user-agent")} connected from: {request.Adress}");
 			switch (request.RequestMethod)
 			{
 				case "GET":
@@ -124,7 +119,7 @@ namespace HTTP
 				default:
 					throw new HTTPException($"{request.RequestMethod} Is Not Implemented", 501);
 			}
-			Log($"Successfully handled {request.RequestMethod} for {request.RawUrl}");
+			HTTPRequest.Log($"Successfully handled {request.RequestMethod} for {request.RawUrl}");
 		}
 		/// <summary>
 		/// Handles a HEAD request.
@@ -219,7 +214,7 @@ namespace HTTP
 		/// </summary>
 		private static void HandleError(TcpClient client, HTTPRequest request, HTTPException exception)
 		{
-			Log($"Failed {request.RequestMethod} for {request.RawUrl} {exception.ErrorCode} - {exception.Message}");
+			HTTPRequest.Log($"Failed {request.RequestMethod} for {request.RawUrl} {exception.ErrorCode} - {exception.Message}");
 			string[] header;
 			string body;
 			string accept = request.GetField("accept");
@@ -259,12 +254,12 @@ namespace HTTP
 		/// <returns>An UTF-8 encoded HTTP message</returns>
 		private static byte[] ConstructMessage(int statusCode, string statusMessage, string[] header, byte[] body)
 		{
-			string result = $"{VERSION} {statusCode} {statusMessage}{LINEBREAK}";
+			string result = $"{HTTPRequest.VERSION} {statusCode} {statusMessage}{HTTPRequest.LINEBREAK}";
 			for (int i = 0; i < header.Length; i++)
 			{
-				result += header[i] + LINEBREAK;
+				result += header[i] + HTTPRequest.LINEBREAK;
 			}
-			result += $"content-lentgth: {body.Length}{LINEBREAK}{LINEBREAK}";
+			result += $"content-lentgth: {body.Length}{HTTPRequest.LINEBREAK}{HTTPRequest.LINEBREAK}";
 			List<byte> buffer = [.. Encoding.UTF8.GetBytes(result), .. body];
 			return buffer.ToArray();
 		} 

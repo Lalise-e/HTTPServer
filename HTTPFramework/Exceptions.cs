@@ -1,4 +1,4 @@
-﻿namespace HTTP
+﻿namespace HTTPFramework
 {
 	public class HTTPException : Exception
 	{
