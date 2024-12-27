@@ -35,7 +35,12 @@ namespace HTTP
 		/// </summary>
 		private static void LoadApi()
 		{
-			Assembly assembly = typeof(IApiCall).Assembly;
+			if (!File.Exists($"{WebPath}\\api\\api.dll"))
+			{
+				HTTPRequest.Log("No API found.");
+				return;
+			}
+			Assembly assembly = Assembly.LoadFile($"{WebPath}\\api\\api.dll");
 			Type[] types = assembly.GetTypes();
 			for (int i = 0; i < types.Length; i++)
 			{
@@ -46,7 +51,7 @@ namespace HTTP
 				if (!interfaces.Contains(typeof(IApiCall)))
 					continue;
 				//Creates path
-				string path = '/' + (types[i].Namespace.Replace('.', '/')) + "/" + types[i].Name;
+				string path = ('/' + types[i].Namespace.Replace('.', '/') + "/" + types[i].Name).Replace('_', '-');
 				//Creates instance of class
 				ConstructorInfo constructor = types[i].GetConstructor(Array.Empty<Type>()) ??
 					throw new Exception($"{types[i].FullName} lacks a public constructor with 0 arguments");
