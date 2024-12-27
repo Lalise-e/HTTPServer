@@ -90,5 +90,20 @@ namespace HTTPFramework
 				return string.Empty;
 			return _header[key];
 		}
+		/// <summary>
+		/// Gets cookie value.
+		/// </summary>
+		/// <param name="key">Name of cookie.</param>
+		/// <returns>Value of cookie or <see cref="string.Empty"/> if there is no cookie.</returns>
+		public string GetCookie(string key)
+		{
+			string cookieRaw = GetField("cookie");
+			List<string> cookies = [.. cookieRaw.Split(';', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)];
+			string result = cookies.Find(s => s.Contains($"{key}="));
+			if(result == default)
+				return string.Empty;
+			result = result.Split('=', StringSplitOptions.TrimEntries)[1];
+			return result;
+		}
 	}
 }
