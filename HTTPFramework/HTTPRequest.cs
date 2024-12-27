@@ -30,7 +30,7 @@ namespace HTTPFramework
 			string[] requestLines = request.Split(LINEBREAK);
 			string[] requestDeets = requestLines[0].Split(' ');
 			RequestMethod = requestDeets[0];
-			RawUrl = requestDeets[1];
+			RawUrl = SanitiseUrl(requestDeets[1]);
 			Version = requestDeets[2];
 			int index = 1;
 			for (; index < requestLines.Length; index++)
@@ -54,6 +54,21 @@ namespace HTTPFramework
 				if (index != requestLines.Length - 1)
 					Body += LINEBREAK;
 			}
+		}
+		private static string SanitiseUrl(string input)
+		{
+			string result = "";
+			if (input.Length == 0)
+				return "/";
+			char lastChar = '\0';
+			for (int i = 0; i < input.Length; i++)
+			{
+				if (lastChar == '/' && input[i] == '/')
+					continue;
+				lastChar = input[i];
+				result += lastChar;
+			}
+			return result;
 		}
 		/// <summary>
 		/// Writes the message to the console window with a timestamp.<br></br>
